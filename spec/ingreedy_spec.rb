@@ -6,6 +6,7 @@ describe Ingreedy do
 
     {
       "1 cup flour" => 1,
+      "1 cup flour" => 1,
       "one cup flour" => 1,
       "1 1/2 cups flour" => '3/2',
       "1.0 cup flour" => 1,
@@ -20,7 +21,8 @@ describe Ingreedy do
       "three 28 ounce cans crushed tomatoes" => 84,
       "1/2 cups flour" => '1/2',
       ".25 cups flour" => '1/4',
-      "12oz tequila" => 12
+      "12oz tequila" => 12,
+      "1 banana" => 1
     }.each do |query, expected|
 
       it "should parse the correct amount as a rational" do
@@ -102,27 +104,6 @@ describe "english units" do
       end
 
     end
-  end
-
-  context 'unit rule' do
-    subject { Ingreedy::Parser.new('1 Tbs salt').unit }
-
-    it { should parse 'Tbs' }
-    it { should_not parse 'Tbbbbbs' }
-
-    it { should parse 'Tbs' }
-    it { should parse 'tBS' }
-    it { should parse 'tBs' }
-    it { should parse 'TBs' }
-    it { should parse 'TBS' }
-    it { should parse 'tbs' }
-  end
-
-  context 'unit_and_preposition rule' do
-    subject { Ingreedy::Parser.new('1 pinch of salt').unit_and_preposition }
-
-    it { should parse 'pInch ' }
-    it { should parse 'pinch of ' }
   end
 
   context "long form" do
