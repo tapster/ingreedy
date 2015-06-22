@@ -6,10 +6,12 @@ describe Ingreedy do
 
     {
       "1 cup flour" => 1,
+      "1 cup flour" => 1,
       "one cup flour" => 1,
       "1 1/2 cups flour" => '3/2',
       "1.0 cup flour" => 1,
       "1.5 cups flour" => '3/2',
+      "1,5 cups flour" => '3/2',
       "1 2/3 cups flour" => '5/3',
       "1 (28 ounce) can crushed tomatoes" => 28,
       "2 (28 ounce) can crushed tomatoes" => 56,
@@ -20,7 +22,8 @@ describe Ingreedy do
       "three 28 ounce cans crushed tomatoes" => 84,
       "1/2 cups flour" => '1/2',
       ".25 cups flour" => '1/4',
-      "12oz tequila" => 12
+      "12oz tequila" => 12,
+      "1 banana" => 1
     }.each do |query, expected|
 
       it "should parse the correct amount as a rational" do
@@ -102,27 +105,6 @@ describe "english units" do
       end
 
     end
-  end
-
-  context 'unit rule' do
-    subject { Ingreedy::Parser.new('1 Tbs salt').unit }
-
-    it { should parse 'Tbs' }
-    it { should_not parse 'Tbbbbbs' }
-
-    it { should parse 'Tbs' }
-    it { should parse 'tBS' }
-    it { should parse 'tBs' }
-    it { should parse 'TBs' }
-    it { should parse 'TBS' }
-    it { should parse 'tbs' }
-  end
-
-  context 'unit_and_preposition rule' do
-    subject { Ingreedy::Parser.new('1 pinch of salt').unit_and_preposition }
-
-    it { should parse 'pInch ' }
-    it { should parse 'pinch of ' }
   end
 
   context "long form" do
@@ -227,7 +209,6 @@ describe "without units" do
   end
 end
 
-
 describe "with 'a' as quantity and preposition 'of'" do
   before(:all) { @ingreedy = Ingreedy.parse "a dash of ginger" }
 
@@ -245,20 +226,52 @@ describe "with 'a' as quantity and preposition 'of'" do
 end
 
 describe "with 'reverse format'" do
-  before(:all) { @ingreedy = Ingreedy.parse "flour 200g" }
-
-  it "should have the correct amount" do
+  it "should work with words containing a 'word digit'" do
+    @ingreedy = Ingreedy.parse "salt 200g"
     @ingreedy.amount.should == 200
+    @ingreedy.unit.should == :gram
+    @ingreedy.ingredient.should == "salt"
   end
 
-  it "should have the correct unit" do
+  it "should work with words ending on a 'word digit'" do
+    @ingreedy = Ingreedy.parse "quinoa 200g"
+    @ingreedy.amount.should == 200
     @ingreedy.unit.should == :gram
+    @ingreedy.ingredient.should == "quinoa"
+  end
+
+  it "should work with approximate quantities" do
+    @ingreedy = Ingreedy.parse "salt to taste"
+    @ingreedy.ingredient.should == "salt"
+    @ingreedy.amount.should be_nil
+    @ingreedy.unit.should == :to_taste
+  end
+end
+
+describe "parsing in language with no prepositions" do
+  before(:all) do
+    Ingreedy.dictionaries[:id] = { units: { to_taste: ['secukupnya'], gram: ['g'] } }
+    Ingreedy.locale = :id
+    @ingreedy = Ingreedy.parse "garam secukupnya"
+  end
+
+  after(:all) do
+    Ingreedy.locale = nil
+  end
+
+  it "should have a nil amount" do
+    @ingreedy.amount.should be_nil
+  end
+
+  it "should have the correct  unit" do
+    @ingreedy.unit.should == :to_taste
   end
 
   it "should have the correct ingredient" do
-    @ingreedy.ingredient.should == "flour"
+    @ingreedy.ingredient.should == "garam"
   end
 end
+
 
 describe "custom dictionaries" do
   context "using Ingreedy.locale=" do

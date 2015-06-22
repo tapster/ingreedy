@@ -2,7 +2,6 @@ require 'parslet'
 
 require_relative 'amount_parser'
 require_relative 'rationalizer'
-require_relative 'unit_parser'
 require_relative 'unit_variation_mapper'
 
 module Ingreedy
@@ -25,25 +24,29 @@ module Ingreedy
     end
 
     rule(:unit) do
-      UnitParser.new
-    end
-
-    rule(:unit_and_preposition) do
-      unit.as(:unit) >> (preposition | whitespace | any.absent?)
-    end
-
-    rule(:preposition) do
-      if prepositions.empty?
-        any
+      if unit_matches.any?
+        unit_matches.map { |u| str(u) }.inject(:|)
       else
-        whitespace >>
-        prepositions.map { |con| str(con) }.inject(:|) >>
-        whitespace
+        str('')
       end
     end
 
     rule(:container_unit) do
-      UnitParser.new
+      unit
+    end
+
+    rule(:unit_and_preposition) do
+      if prepositions.empty?
+        unit.as(:unit) >> (whitespace | any.absent?)
+      else
+        unit.as(:unit) >> (preposition | whitespace | any.absent?)
+      end
+    end
+
+    rule(:preposition) do
+      whitespace >>
+      prepositions.map { |con| str(con) }.inject(:|) >>
+      whitespace
     end
 
     rule(:amount_unit_separator) do
@@ -54,7 +57,7 @@ module Ingreedy
       # e.g. (12 ounce) or 12 ounce
       str('(').maybe >>
       container_amount.as(:container_amount) >>
-      amount_unit_separator >>
+      amount_unit_separator.maybe >>
       container_unit.as(:unit) >>
       str(')').maybe >> whitespace
     end
@@ -66,14 +69,18 @@ module Ingreedy
       container_size.maybe
     end
 
+    rule(:quantity) do
+      amount_and_unit | unit_and_preposition
+    end
+
     rule(:standard_format) do
       # e.g. 1/2 (12 oz) can black beans
-      amount_and_unit >> any.repeat.as(:ingredient)
+      quantity >> any.repeat.as(:ingredient)
     end
 
     rule(:reverse_format) do
       # e.g. flour 200g
-      (amount.absent? >> any).repeat.as(:ingredient) >> amount_and_unit
+      ((whitespace >> quantity).absent? >> any).repeat.as(:ingredient) >> whitespace >> quantity
     end
 
     rule(:ingredient_addition) do
@@ -105,6 +112,10 @@ module Ingreedy
 
     private
 
+    def unit_matches
+      @unit_matches ||= original_query.scan(UnitVariationMapper.regexp).sort_by(&:length).reverse
+    end
+
     def prepositions
       Ingreedy.dictionaries.current.prepositions
     end
@@ -122,6 +133,7 @@ module Ingreedy
     end
 
     def rationalize_amount(amount, capture_key_prefix = '')
+      return unless amount
       integer = amount["#{capture_key_prefix}integer_amount".to_sym]
       integer &&= integer.to_s
 

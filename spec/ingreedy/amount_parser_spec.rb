@@ -4,8 +4,9 @@ describe Ingreedy::AmountParser do
 
   context 'given mixed case insensitive english words' do
     %w|one two three four five six seven eight nine ten eleven twelve|.each do |word|
-      it %Q|parses a lowercase "#{word}"| do
-        subject.should parse(word)
+      word += ' '
+      it %Q|parses a lowercase "#{word}" followed by space| do
+        subject.should parse(word )
       end
 
       it %Q|parses a uppercase "#{word}"| do
@@ -60,6 +61,14 @@ describe Ingreedy::AmountParser do
       result = subject.parse('3.14')
 
       result[:float_amount].should    == '3.14'
+      result[:fraction_amount].should == nil
+      result[:integer_amount].should  == nil
+    end
+
+    it 'should capture a european style float' do
+      result = subject.parse('3,14')
+
+      result[:float_amount].should    == '3,14'
       result[:fraction_amount].should == nil
       result[:integer_amount].should  == nil
     end
