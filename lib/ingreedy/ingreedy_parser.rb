@@ -138,11 +138,15 @@ module Ingreedy
       word = amount["#{capture_key_prefix}word_integer_amount".to_sym]
       word &&= word.to_s
 
+      arabic = amount["#{capture_key_prefix}arabic_amount".to_sym]
+      arabic &&= arabic.to_s
+
       Rationalizer.rationalize(
         integer:  integer,
         float:    float,
         fraction: fraction,
-        word:     word
+        word:     word,
+        arabic:   arabic
       )
     end
 

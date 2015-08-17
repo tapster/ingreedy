@@ -99,6 +99,28 @@ describe Ingreedy::AmountParser do
 
   end
 
+  context 'arabic' do
+
+    it 'should parse a small number' do
+      subject.should parse('٤')
+    end
+
+    it 'should parse a large number' do
+      subject.should parse('٦٧٨٩')
+    end
+
+    it 'should capture an arabic number' do
+      result = subject.parse('٤')
+
+      result[:float_amount].should    == nil
+      result[:fraction_amount].should == nil
+      result[:integer_amount].should  == nil
+      result[:arabic_amount].should  == '٤'
+    end
+
+
+  end
+
   context 'junk' do
 
     it 'should not parse a non-number' do

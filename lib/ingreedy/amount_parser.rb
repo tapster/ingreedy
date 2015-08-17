@@ -21,6 +21,10 @@ module Ingreedy
       match('[0-9]').repeat(1)
     end
 
+    rule(:arabic) do
+      match('[٠١٢٣٤٥٦٧٨٩]').repeat(1)
+    end
+
     rule(:float) do
       integer.maybe >>
       float_delimiter >> integer
@@ -64,6 +68,7 @@ module Ingreedy
       fraction |
       float.as(capture_key(:float_amount)) |
       integer.as(capture_key(:integer_amount)) |
+      arabic.as(capture_key(:arabic_amount)) |
       word_digit.as(capture_key(:word_integer_amount)) >> amount_unit_separator
     end
 
